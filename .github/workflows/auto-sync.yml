@@ -1,0 +1,45 @@
+name: Sync Fork from Upstream
+
+# Запуск: по расписанию (cron) и по ручному запуску
+on:
+  schedule:
+    - cron: "0 */12 * * *"   # каждые 12 часов — поменяй, если нужно
+  workflow_dispatch:         # позволяет запустить вручную в Actions -> Run workflow
+
+permissions:
+  contents: write            # нужно, чтобы GITHUB_TOKEN мог пушить изменения
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0      # нужно, чтобы были все коммиты и ветки
+
+      - name: Set git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/xeefei/X-Panel.git
+          git fetch upstream
+
+      - name: Merge upstream into local branch
+        run: |
+          # Замените main на нужную ветку, если требуется
+          git checkout main
+          git merge upstream/main --no-edit || {
+            echo "Merge conflict or other merge failure — aborting workflow";
+            exit 1;
+          }
+
+      - name: Push changes to origin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push origin main
