@@ -15,13 +15,38 @@ plain='\033[0m'
 [[ $EUID -ne 0 ]] && echo -e "${red}致命错误: ${plain} 请使用 root 权限运行此脚本\n" && exit 1
 
 # ----------------------------------------------------------
+# 获取机器唯一硬件标识 (HWID)
+# ----------------------------------------------------------
+get_hwid() {
+    local machine_id=""
+
+    # 1. 优先尝试获取 DMI Product UUID (VPS 硬件 ID，重装系统通常不变)
+    if [[ -r /sys/class/dmi/id/product_uuid ]]; then
+        machine_id=$(cat /sys/class/dmi/id/product_uuid)
+    
+    # 2. 其次尝试获取 eth0 网卡 MAC 地址 (大部分 VPS 重装后 MAC 不变)
+    elif [[ -r /sys/class/net/eth0/address ]]; then
+        machine_id=$(cat /sys/class/net/eth0/address)
+        
+    # 3. 如果都失败，才使用 machine-id (重装会变，作为最后兜底)
+    elif [[ -f /etc/machine-id ]]; then
+        machine_id=$(cat /etc/machine-id)
+    else
+        machine_id=$(hostname)
+    fi
+    
+    # 取 MD5 作为唯一指纹，确保格式统一
+    echo -n "$machine_id" | md5sum | awk '{print $1}'
+}
+
+# ----------------------------------------------------------
 # 函数：付费Pro版安装逻辑 (install_paid_version)
 # ----------------------------------------------------------
-# 此函数负责获取授权码和IP，并从远程授权服务器获取并执行付费脚本
+# 此函数负责获取授权码和IP + 机器指纹，并从远程授权服务器获取并执行付费脚本
 #
 install_paid_version() {
     echo ""
-    echo -e "${green}您选择了安装 【X-Panel 付费Pro版】${plain}"
+    echo -e "${green}您正在安装/升级/更新 【X-Panel 付费Pro版】${plain}"
     echo ""
     echo -e "${yellow}------------------------------------------------------${plain}"
     echo ""
@@ -44,20 +69,23 @@ install_paid_version() {
         echo -e "${red}请检查您的网络连接或 curl 是否正常工作。${plain}"
         exit 1
     fi
+
+    # 3. [新增] 获取本机硬件指纹
+    vps_hwid=$(get_hwid)
+
     echo -e "${green}本机 IP: ${vps_ip}${plain}"
+    echo -e "${green}机器指纹: ${vps_hwid}${plain}" # 调试用
     echo ""
     
-    # 3. 设置您的授权服务器地址
+    # 4. 设置您的授权服务器地址
     AUTH_SERVER_URL="https://auth.wudust.top/install_pro.php"
     
     echo -e "${green}正在连接〔远程授权服务器〕进行验证......${plain}"
     echo ""
     echo -e "${yellow}请稍候.........${plain}"
     
-    # 4. 重要：发送请求并执行返回的脚本
-    # bash <(curl ...) 将 curl 的输出 (即服务器返回的脚本) 
-    # 直接通过管道传给 bash 命令来执行。
-    bash <(curl -sL --connect-timeout 10 -X POST -d "key=${auth_key}&ip=${vps_ip}" "${AUTH_SERVER_URL}")
+    # 5. 发送请求 (带上 hwid) 并执行返回的脚本
+    bash <(curl -sL --connect-timeout 10 -X POST -d "key=${auth_key}&ip=${vps_ip}&hwid=${vps_hwid}" "${AUTH_SERVER_URL}")
     
     # 执行完远程脚本后，本地脚本退出
     exit 0
