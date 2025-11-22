@@ -84,10 +84,27 @@ install_paid_version() {
     echo ""
     echo -e "${yellow}请稍候.........${plain}"
     
-    # 5. 发送请求 (带上 hwid) 并执行返回的脚本
-    bash <(curl -sL --connect-timeout 10 -X POST -d "key=${auth_key}&ip=${vps_ip}&hwid=${vps_hwid}" "${AUTH_SERVER_URL}")
+    # 5. 将服务器响应保存到变量
+    response=$(curl -sL --connect-timeout 20 -X POST -d "key=${auth_key}&ip=${vps_ip}&hwid=${vps_hwid}" "${AUTH_SERVER_URL}")
     
-    # 执行完远程脚本后，本地脚本退出
+    # 6. 简单判断响应是否为空
+    if [ -z "$response" ]; then
+        echo -e "${red}错误: 无法连接到授权服务器或服务器无响应。${plain}"
+        echo -e "${yellow}请检查网络连接或联系管理员。${plain}"
+        exit 1
+    fi
+
+    # 7. 判断是否包含 PHP 错误 (如 Syntax error 或 Fatal error)
+    # 如果 PHP 报错，通常会包含 "Fatal error" 或 "Parse error" 字样
+    if echo "$response" | grep -qE "Fatal error|Parse error"; then
+         echo -e "${red}错误: 授权服务器发生内部错误。${plain}"
+         echo -e "详细信息: $response"
+         exit 1
+    fi
+
+    # 8. 执行脚本
+    bash <(echo "$response")
+    
     exit 0
 }
 
