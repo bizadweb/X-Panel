@@ -105,6 +105,31 @@
 #### PS：上述两种方法：【ssh端口转发】或申请安装证书的目的都是为了更安全地登录面板，而至于搭建的其他流程和步骤，都是一样的；如果你已经【申请安装证书】了，并不会受到其他什么额外影响，就不用去折腾【ssh转发】了，直接用 【https://你的域名:端口/路径】 去登录你的面板管理后台就行了。
 
 ------------
+## 如何在〔X-Panel-Pro 面板〕中去使用【一个机器人管理多面板】功能？
+#### 1、先购买【授权码】安装好〔X-Panel-Pro 面板〕，进入后台，在【主从管理】界面，
+#### 2、点击【添加被控端 VPS】，按照要求填入面板登录地址，用户名和密码，备注等信息，
+![64](./media/64.png)
+![65](./media/65.png)
+#### 3、然后点击【配置本机“主控机器人”】，跳转到【机器人设置页面】，输入token令牌配置好，
+![66](./media/66.png)
+![73](./media/73.png)
+#### 4、现在重启本机 VPS，打开TG端机器人，即可看到【切换控制 VPS】等菜单，切换操作即可使用。
+![67](./media/67.png)
+![68](./media/68.png)
+
+------------
+## 如何在〔X-Panel-Pro 面板〕中去使用【一键部署中转节点】的功能？
+#### 1、先购买【授权码】安装好〔X-Panel-Pro 面板〕，进入后台，在【主从管理】界面，
+#### 2、点击【添加中转机 VPS】，按照要求填入面板登录地址，用户名和密码，备注等信息，
+![69](./media/69.png)
+#### 3、然后点击列表页中的【一键部署中转】，即可在后续的流程中，自动进入配置流程，
+![70](./media/70.png)
+#### 4、稍等片刻，本机配置好的话就几秒，全自动给您生成了【二维码和中转链接】，复制可用，
+![71](./media/71.png)
+#### 5、记得要去放行【本机】和【远程中转机】对应的端口，也可点击【检测中转节点】功能去看是否通？
+![72](./media/72.png)
+
+------------
 ## ✰如何从其他x-ui版本迁移到〔X-Panel面板〕？✰
 #### 1、若你用的是伊朗老哥的原版3X-UI，是可以直接〔覆盖安装〕的，因为〔X-Panel面板〕是fork了原版3X-UI的项目，基于原有的功能进行优化的，大功能是没有变化的，主要是进行了脚本的〔汉化处理〕，其他诸如数据库文件等位置是没有改变的，所以直接覆盖安装，并不会影响你〔原有节点及配置〕等数据；安装命令如下：
 ```
@@ -867,10 +892,11 @@ XUI_BIN_FOLDER="bin" XUI_DB_FOLDER="/etc/x-ui" go build main.go
 - 如果你觉得本项目对你有用，而且你也恰巧有这方面的需求，你也可以选择通过我的购买链接赞助我。
 - [1、搬瓦工GIA高端线路，仅推荐购买GIA套餐：https://bandwagonhost.com/aff.php?aff=75015](https://bandwagonhost.com/aff.php?aff=75015)
 - [2、Dmit高端GIA线路：https://www.dmit.io/aff.php?aff=9326](https://www.dmit.io/aff.php?aff=9326)
-- [3、Sharon亚太优化线路机：https://gomami.io/aff.php?aff=174](https://gomami.io/aff.php?aff=174)
-- [4、Bagevm优质落地鸡（原生IP全解锁）：https://www.bagevm.com/aff.php?aff=754](https://www.bagevm.com/aff.php?aff=754)
-- [5、白丝云【4837线路】实惠量大管饱：https://cloudsilk.io/aff.php?aff=706](https://cloudsilk.io/aff.php?aff=706)
-- [6、RackNerd极致性价比机器：https://my.racknerd.com/aff.php?aff=15268&pid=912](https://my.racknerd.com/aff.php?aff=15268&pid=912)
+- [3、Gomami亚太顶尖优化线路：https://gomami.io/aff.php?aff=174](https://gomami.io/aff.php?aff=174)
+- [4、ISIF优质亚太优化线路：https://cloud.isif.net/login?affiliation_code=333](https://cloud.isif.net/login?affiliation_code=333)
+- [5、Bagevm优质落地鸡（原生IP全解锁）：https://www.bagevm.com/aff.php?aff=754](https://www.bagevm.com/aff.php?aff=754)
+- [6、白丝云【4837线路】实惠量大管饱：https://cloudsilk.io/aff.php?aff=706](https://cloudsilk.io/aff.php?aff=706)
+- [7、RackNerd极致性价比机器：https://my.racknerd.com/aff.php?aff=15268&pid=912](https://my.racknerd.com/aff.php?aff=15268&pid=912)
 
 ------------
 ## 特别感谢
