@@ -524,6 +524,9 @@
 [pages.navigation]
 "title" = "实用导航"
 
+[pages.controlledmanagement]
+"title" = "主从管理"
+
 [pages.xray.rules]
 "first" = "置顶"
 "last" = "置底"

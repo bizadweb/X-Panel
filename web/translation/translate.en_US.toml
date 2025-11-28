@@ -506,6 +506,9 @@
 [pages.navigation]
 "title" = "Practical Navigation"
 
+[pages.controlledmanagement]
+"title" = "Controlled Management"
+
 [pages.xray.rules]
 "first" = "First"
 "last" = "Last"

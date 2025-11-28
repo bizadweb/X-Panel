@@ -202,10 +202,10 @@ apt update -y&&apt install -y curl&&apt install -y socat
 
 ## 安装指定版本
 
-若要安装指定的版本，请使用以下安装命令。 e.g., ver `v25.11.11`:
+若要安装指定的版本，请使用以下安装命令。 e.g., ver `v25.12.30`:
 
 ```
-VERSION=v25.11.11 && bash <(curl -Ls "https://raw.githubusercontent.com/xeefei/x-panel/$VERSION/install.sh") $VERSION
+VERSION=v25.12.30 && bash <(curl -Ls "https://raw.githubusercontent.com/xeefei/x-panel/$VERSION/install.sh") $VERSION
 ```
 ------------
 ## 若你的VPS默认有防火墙，请在安装完成之后放行指定端口

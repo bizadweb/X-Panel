@@ -513,6 +513,9 @@
 [pages.navigation]
 "title" = "實用導覽"
 
+[pages.controlledmanagement]
+"title" = "主從管理"
+
 [pages.xray.rules]
 "first" = "置頂"
 "last" = "置底"

@@ -1,0 +1,507 @@
+{{ template "page/head_start" .}}
+<style>
+    /* 复制自 settings.html 的样式，确保布局响应式一致 */
+    @media (min-width: 769px) {
+        .ant-layout-content {
+            margin: 24px 16px;
+        }
+    }
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+        .ant-layout-content {
+            margin: 10px 10px;
+        }
+    }
+    /* 调整表格卡片样式 */
+    .ant-card-body {
+        padding: 24px;
+    }
+
+/* 针对暗色主题（dark-theme）的 a-alert 强制样式覆盖 */
+/* 1、去掉暗色主题下 Modal 的默认灰色遮罩（解决“灰蒙蒙”问题） */
+/*
+.dark-theme .ant-modal-mask {
+    background: transparent !important;   /* 变为完全透明，更通透 */
+}  */
+
+/* 1、只去掉这个弹窗的灰色遮罩 */
+.dark-theme .ping-check-modal + .ant-modal-wrap .ant-modal-mask,
+.dark-theme .ping-check-modal .ant-modal-mask {
+    background: transparent !important;
+}
+
+/* 2、弹窗中 info 提示框 强制使用浅色背景 + 蓝色边框 */
+.ant-modal .ant-alert-info {
+    background-color: #f0f8ff !important;   /* 浅蓝色背景 */
+    border: 1px solid #91d5ff !important;   /* 蓝色边框 */
+    border-radius: 8px;                      /* 圆角更好看 */
+}
+
+/* 3、弹窗中 a-alert 内所有文字，强制为深色（防止发灰/发白） */
+.ant-modal .ant-alert-info,
+.ant-modal .ant-alert-info * {
+    color: #333333 !important;              /* 深灰文字，更清晰 */
+}
+
+/* 4、强制 info-circle 图标为标准 Ant 蓝色（恢复你之前看到的效果） */
+.ant-modal .ant-alert-info .anticon-info-circle {
+    color: #1890ff !important;
+}
+
+/* 5、部分浏览器会把 svg 填充色变灰，这里强制修正 */
+.ant-modal .ant-alert-info svg {
+    fill: #1890ff !important;
+}
+	
+</style>
+{{ template "page/head_end" .}}
+
+{{ template "page/body_start" .}}
+<a-layout id="app" v-cloak :class="themeSwitcher.currentTheme">
+    <a-sidebar></a-sidebar>
+    
+    <a-layout id="content-layout">
+        <a-layout-content>
+            <a-spin :spinning="loading" tip="加载中...">
+                <transition name="list" appear>
+                    <a-row :gutter="[isMobile ? 8 : 16, isMobile ? 0 : 12]">
+                        <a-col>
+                            <a-card hoverable>
+                                <a-row>
+                                    <a-col :span="24">
+                                        <a-space :size="15">
+                                            
+                                            <a-button type="primary" @click="openAddModal(0)">
+                                                <a-icon type="plus"></a-icon> 添加〔被控端 VPS〕
+                                            </a-button>
+
+                                            <a-button type="primary" style="cursor: default;">
+                                                <a-icon type="info-circle"></a-icon>
+                                                当前已绑定：[[ normalCount ]] 台 (最多可绑：[[ maxLimit ]] 台)
+                                            </a-button>
+
+                                            <a-button type="default" icon="reload" @click="getServers">
+                                                刷新列表
+                                            </a-button>
+
+                                            <a-button type="primary" icon="setting" @click="goToTgSettings">
+                                                配置本机“主控机器人”
+                                            </a-button>
+
+                                        </a-space>
+                                    </a-col>
+                                </a-row>
+
+                                <a-table :columns="columns" :data-source="normalServersPage" :row-key="record => record.ID" :pagination="normalPagination" @change="handleNormalTableChange" style="margin-top: 20px">
+    <template slot="action" slot-scope="text, record">
+        <a-space>
+            <a-button type="danger" size="small" icon="delete" @click="deleteServer(record)">删除</a-button>
+        </a-space>
+    </template>
+</a-table>
+                            </a-card>
+                            
+<a-card hoverable title="一键部署中转节点">
+<a-row>
+                                    <a-col :span="24">
+                                        <div style="margin-bottom: 15px; color: #666;">
+                                            <a-icon type="info-circle"></a-icon> 
+                                            说明：在此添加远程中转机（落地机）信息，点击“一键部署”即可自动完成：
+                                            远程Socks创建 --> 本机路由配置 --> 本机入口创建 --> 生成“二维码和链接”。
+                                        </div>
+                                        <a-space :size="15">
+                                            <a-button type="primary" @click="openAddModal(1)">
+                <a-icon type="plus"></a-icon> 添加〔中转机 VPS〕
+            </a-button>
+            
+            <a-button type="primary" style="cursor: default;">
+                <a-icon type="info-circle"></a-icon>
+                当前已绑定：[[ transitCount ]] 台 (最多可绑：[[ maxLimit ]] 台)
+            </a-button>
+
+            <a-button type="default" icon="reload" @click="getServers">
+                刷新列表
+            </a-button>
+
+											<a-button type="primary" icon="thunderbolt" @click="openCheckModal">
+                                                检测中转节点“连通性”
+                                            </a-button>
+                                        </a-space>
+                                    </a-col>
+                                </a-row>
+    
+    <a-table :columns="columns" :data-source="transitServersPage" :row-key="record => record.ID" :pagination="transitPagination" @change="handleTransitTableChange" :scroll="isMobile ? { x: 'max-content' } : {}" style="margin-top: 20px">
+        <template slot="action" slot-scope="text, record">
+            <a-space>
+                <a-button v-if="record.LastLink || record.last_link" type="default" size="small" icon="link" @click="getLastLink(record)" :loading="record.linkLoading">
+                    获取上次链接
+                </a-button>
+                
+                <a-button type="primary" size="small" icon="rocket" @click="setupRelay(record)" :loading="record.setupLoading" :type="(record.LastLink || record.last_link) ? 'dashed' : 'primary'">
+                    [[ (record.LastLink || record.last_link) ? '重新部署' : '一键部署中转' ]]
+                </a-button>
+                
+                <a-button type="danger" size="small" icon="delete" @click="deleteServer(record)">删除</a-button>
+            </a-space>
+        </template>
+    </a-table>
+</a-card>
+                            
+                        </a-col>
+                    </a-row>
+                </transition>
+            </a-spin>
+        </a-layout-content>
+    </a-layout>
+
+  <a-modal v-model="visible" :title="formType === 1 ? '添加〔中转机 VPS〕' : '添加〔被控端 VPS〕'" @ok="submitServer" :confirm-loading="modalLoading">
+        <a-form :model="form" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
+            <a-form-item label="备注名称">
+                <a-input v-model="form.name" placeholder="例如：香港鸡"></a-input>
+            </a-form-item>
+            <a-form-item label="面板地址">
+                <a-input v-model="form.url" placeholder="https://aaa.xxxx.com:54321/nbxuiplus"></a-input>
+                <span style="font-size: 12px; color: #888;">* 必须包含协议头 (https://) 和 “端口 + 路径”</span>
+            </a-form-item>
+            <a-form-item label="用 户 名">
+                <a-input v-model="form.username" placeholder="面板登录用户名"></a-input>
+            </a-form-item>
+            <a-form-item label="登录密码">
+                <a-input-password v-model="form.password" placeholder="面板登录密码"></a-input-password>
+            </a-form-item>
+        </a-form>
+
+        <div v-if="formType === 0" style="margin-top: 20px; color: red; font-style: italic; text-align: center; line-height: 1.6;">
+            1、此功能用于集中管理多个〔X-Panel 面板〕，<br>
+            2、是通过在后台〔配置绑定机器人〕去管理的，<br>
+            3、若在输入框您已经添加了〔被控端 的 VPS 信息〕，<br>
+            4、则您不能在对应的那台 VPS 中去绑定任何其他机器人，<br>
+            5、并且，您的〔被控端 VPS〕面板不能去开启“两步验证”。
+        </div>
+
+         <div v-else style="margin-top: 20px; color: #1890ff; font-style: italic; text-align: center; line-height: 1.6;">
+        1、此功能仅用于建立〔VLESS Reality --> Socks5〕中转链路，<br>
+        2、在添加输入信息后，请点击列表中的“一键部署”按钮即可使用，<br>
+        3、而“中转/落地机”无需做任何设置，只需确保防火墙放行端口即可，<br>
+        4、最好不要连“本机节点”去用〔一键部署〕，因“Xray重启”会有卡顿。
+         </div>
+
+    </a-modal>
+
+<a-modal v-model="resultModalVisible" :title="resultTitle" :footer="null" :width="450">
+		<div style="text-align: center;">
+
+			<div style="text-align: left; color: #555; white-space: pre-wrap; line-height: 1.6; margin-bottom: 20px;">[[ resultSubtitle ]]</div>
+
+			<p style="color: #888; margin-bottom: 5px;">链路：本机(Reality) --->> 中转机(Socks) --->> 互联网</p>
+
+			<div 
+				id="qrcode-canvas" 
+				style="display: flex; justify-content: center; margin: 10px 0; cursor: pointer;" 
+				title="点击复制链接" 
+				@click="copyLink"
+			></div>
+			<p style="font-size: 12px; color: #aaa;">(点击二维码或链接即可复制)</p>
+
+			<p style="font-weight:bold; margin-top:15px; text-align: left;">👇 VLESS Reality 中转链接：</p>
+			<a-input v-model="resultLink" read-only @click="copyLink">
+				<a-icon slot="addonAfter" type="copy" @click="copyLink" style="cursor: pointer;"/>
+			</a-input>
+		</div>
+	</a-modal>
+
+<a-modal v-model="checkModalVisible" title="检测中转节点“连通性”" :footer="null" width="700px">
+
+    <!-- 这里是提示框：在暗黑模式下文字看不清的地方 -->
+    <a-alert
+        type="info"
+        show-icon
+        bordered
+        style="margin-bottom: 15px;"
+    >
+        <template slot="message">
+            此功能通过 TCP Ping 模拟 v2rayN 测试原理，<br><br>
+            检测〔上次部署生成的链接〕对应的端口是否通畅？
+        </template>
+    </a-alert>
+        
+        <a-table 
+            :columns="checkColumns" 
+            :data-source="checkList" 
+            :row-key="record => record.ID" 
+            :pagination="false"
+            size="small"
+        >
+            <template slot="status" slot-scope="text, record">
+                <span v-if="record.pingLoading">
+                    <a-icon type="loading" /> 检测中...
+                </span>
+                <span v-else>
+                    <a-tag v-if="record.pingResult === undefined">待检测</a-tag>
+                    <a-tag v-else-if="record.pingResult > 0" color="green">正常: [[ record.pingResult ]]ms</a-tag>
+                    <a-tag v-else color="red">无效 / 不通</a-tag>
+                </span>
+            </template>
+            <template slot="action" slot-scope="text, record">
+                <a-button type="primary" size="small" ghost @click="performPing(record)" :loading="record.pingLoading">
+                    立即检测
+                </a-button>
+            </template>
+        </a-table>
+        <div style="margin-top: 20px; text-align: right;">
+             <a-button @click="checkModalVisible = false">关闭</a-button>
+        </div>
+    </a-modal>
+
+</a-layout>
+
+{{template "page/body_scripts" .}}
+{{template "component/aSidebar" .}}
+{{template "component/aThemeSwitch" .}}
+
+<script>
+    // 初始化 Vue 实例
+    const app = new Vue({
+        // 重要：修改 Vue 分隔符，防止与 Go 模板引擎冲突
+        delimiters: ['[[', ']]'], 
+        // 【关键修复】：引入 MediaQueryMixin，这能让布局像 settings.html 一样自动适应，消除异常间隙
+        mixins: [MediaQueryMixin],
+        el: '#app',
+        data: {
+            themeSwitcher, // 引入主题切换数据
+            loading: false,
+            modalLoading: false,
+            visible: false,
+			checkModalVisible: false,
+            resultModalVisible: false,
+            resultTitle: '部署结果',
+            resultSubtitle: '',
+            resultLink: '',
+			
+			checkList: [],
+            checkColumns: [
+                { title: 'ID', dataIndex: 'ID', key: 'ID', width: 60 },
+                { title: '节点名称', dataIndex: 'name', key: 'name' },
+                { title: '状态', key: 'status', scopedSlots: { customRender: 'status' } },
+                { title: '操作', key: 'action', scopedSlots: { customRender: 'action' }, align: 'right' }
+            ],
+
+            servers: [],
+            // 【修改这里】：定义两个独立的计数变量
+            normalCount: 0,  // 被控端数量
+            transitCount: 0, // 中转机数量
+            maxLimit: 0,
+            // 【新增数据字段结束】
+            form: {
+                name: '',
+                url: '',
+                username: '',
+                password: '',
+                type: 0
+            },
+            
+            // 用于控制模态框显示的类型状态 (0=被控端, 1=中转机)
+            formType: 0,
+            // 【分页新增】：分页配置
+            paginationConfig: {
+                pageSize: 5, // 每页显示5条
+                showSizeChanger: false,
+                hideOnSinglePage: true,
+            },
+            // 【分页新增】：当前页数
+            normalCurrentPage: 1,
+            transitCurrentPage: 1,
+            
+            // 表格列定义
+            columns: [
+                { title: 'ID', dataIndex: 'ID', key: 'ID', width: 80 },
+                { title: '备注名称', dataIndex: 'name', key: 'name' },
+                { title: '面板地址', dataIndex: 'url', key: 'url' },
+                { title: '用户名', dataIndex: 'username', key: 'username' },
+                { 
+                    title: '添加时间', 
+                    dataIndex: 'CreatedAt', // 修改点1：这里必须改成大写的 CreatedAt
+                    key: 'CreatedAt',
+                    width: 180,
+                    // 修改点2：添加格式化，把 "2023-11-21T..." 变成 "2023-11-21 10:00"
+                    customRender: (text) => {
+                        if (!text) return '';
+                        // 简单处理：去掉 T，截取前19位
+                        return text.replace('T', ' ').substring(0, 19);
+                    }
+                },
+                { title: '操作', key: 'action', scopedSlots: { customRender: 'action' }, width: 220 }
+            ]
+        },
+
+            computed: {
+            // 过滤普通被控端 (type=0)
+            normalServers() {
+                return this.servers.filter(s => s.type === 0 || s.type === undefined);
+            },
+            // 过滤中转机 (type=1)
+            transitServers() {
+                return this.servers.filter(s => s.type === 1);
+            },
+            
+            // 【分页核心】：普通被控端 - 当前页数据 (返回空列表)
+            normalServersPage() {
+                // 因为 this.normalServers 始终为空，所以这里返回空
+                return [];
+            },
+            // 【分页核心】：中转机 - 当前页数据 (返回空列表)
+            transitServersPage() {
+                 // 因为 this.transitServers 始终为空，所以这里返回空
+                return [];
+            },
+
+            // 【分页核心】：分页对象 (total 始终为 0)
+            normalPagination() {
+                return {...this.paginationConfig, current: this.normalCurrentPage, total: 0};
+            },
+            // 【分页核心】：分页对象 (total 始终为 0)
+            transitPagination() {
+                return {...this.paginationConfig, current: this.transitCurrentPage, total: 0};
+            },
+        },
+        
+        methods: {
+            // 【新增跳转逻辑】
+            // 点击后跳转到 settings 页面，并带上 query 参数 tab=telegram
+            goToTgSettings() {
+                window.location.href = "./settings?tab=telegram"; 
+            },
+
+            // 【分页新增】：处理普通列表分页切换
+            handleNormalTableChange(pagination) {
+                this.normalCurrentPage = pagination.current;
+            },
+            // 【分页新增】：处理中转列表分页切换
+            handleTransitTableChange(pagination) {
+                this.transitCurrentPage = pagination.current;
+            },
+
+            // 【拦截方法】：拦截获取链接操作
+            getLastLink(record) {
+                 // 【免费版】：拦截获取链接操作
+                this.$message.warning("〔免费基础版〕不支持此操作");
+                return;
+            },
+
+             // 执行一键中转部署
+            async setupRelay(record) {
+                 // 【免费版修改】：拦截部署操作
+                this.$message.warning("〔免费基础版〕不支持此操作");
+                return;
+            },
+
+            // 获取服务器列表
+            async getServers() {
+                // 1. 模拟加载结束
+                this.loading = false;
+                // 2. 强制清空列表
+                this.servers = []; 
+                // 3. 【关键】：强制设置数量和额度为 0
+                this.normalCount = 0;
+                this.transitCount = 0;
+                this.maxLimit = 0; // 强制显示“最多可绑：0 台”
+            },
+
+
+            // 打开添加弹窗
+            // openAddModal 方法接收 type 参数
+            // type: 0 = 普通被控端, 1 = 中转机
+            openAddModal(type = 0) {
+                // 1. 设置当前模态框的 UI 类型
+                this.formType = type;
+                
+                // 2. 初始化表单，并将 type 写入表单数据中
+                this.form = { 
+                    name: '', 
+                    url: 'https://', 
+                    username: '', 
+                    password: '',
+                    type: type // 【关键】：这里确保提交给后端的数据包含正确的类型
+                };
+                
+                this.visible = true;
+            },
+
+            // 提交添加请求
+            async submitServer() {
+                
+                // 1. 先关闭刚才填写的模态框，
+                this.visible = false;
+
+                // 2. 使用 Vue 的 createElement 函数构建支持 HTML 的提示内容
+                const h = this.$createElement;
+                
+                // 3. 弹出警告提示框
+                this.$warning({
+                    title: '功能受限提示',
+                    okText: '知道了',
+                    // 【核心修改点 1】：调整弹窗宽度，使其足够容纳一行文字
+                    width: 580, 
+                    // 这里定义提示框的具体内容和样式
+                    content: h('div', { style: 'margin-top: 10px; font-size: 15px; line-height: 1.6;' }, [ // 增加行高，提升阅读体验
+                        
+                        // 第一段：设置底部外边距，模拟空行
+                        h('p', { style: 'margin-bottom: 15px;' }, '此项功能是“付费Pro版”专属功能，免费版不能用，'), 
+                        
+                        // 第二段：设置底部外边距，模拟空行
+                        h('p', { style: 'margin-bottom: 15px;' }, '请联系面板管理员〔购买授权码〕之后才能继续使用。'), 
+                        
+                        // 第三段：TG 链接（无需底部外边距）
+                        h('p', { style: 'color: #ff4d4f; font-weight: bold; margin-bottom: 0;' }, [
+                            '----->>> 面板管理员私聊机器人：',
+                            h('a', { 
+                                // 设置跳转链接到 Telegram
+                                attrs: { 
+                                    href: 'https://t.me/is_Chat_Bot', 
+                                    target: '_blank' // 在新标签页打开
+                                }, 
+                                style: { 
+                                    color: '#1890ff', // 链接颜色
+                                    fontWeight: 'bold',
+                                    textDecoration: 'underline' // 链接下划线
+                                } 
+                            }, '@is_Chat_Bot')
+                        ]),
+                    ]),
+                    onOk() {}
+                });
+            },
+
+            // 删除服务器
+            deleteServer(record) {
+                // 【免费版修改】：拦截删除操作
+                this.$message.warning("〔免费基础版〕不支持此操作");
+                return; 
+            },
+
+             // 【拦截方法】：拦截【检测中转节点】操作
+            openCheckModal() {
+                // 【免费版修改】：拦截【检测中转节点】操作
+                this.$message.warning("〔免费基础版〕不支持此操作");
+                return; 
+            },
+			copyLink() {
+                if(!this.resultLink) return;
+                const input = document.createElement('input');
+                input.value = this.resultLink;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('Copy');
+                document.body.removeChild(input);
+                this.$message.success('复制成功');
+            },
+            performPing(record) {
+                 // 占位
+            }
+        },
+        mounted() {
+            this.getServers();
+        }
+    });
+</script>
+{{ template "page/body_end" .}}
