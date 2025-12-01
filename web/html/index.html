@@ -522,7 +522,7 @@
 										</template>
 									</a-card>
 
-									<a-row :gutter="[isMobile ? 8 : 16, 0]" :style="{ flexShrink: 0, width: '100%' }">
+									<a-row type="flex" align="top" :gutter="[isMobile ? 8 : 16, 0]" :style="{ flexShrink: 0 }">
 										<a-col :sm="24" :md="12">
 											<a-card title='{{ i18n "pages.index.totalData" }}' hoverable :bordered="true" class="glass-card" :style="{ marginBottom: isMobile ? '16px' : '0' }">
 												<a-row :gutter="isMobile ? [8,8] : 0">
