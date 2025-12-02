@@ -206,6 +206,7 @@
 "privatekey" = "Private Key"
 "clickOnQRcode" = "Click on QR Code to Copy"
 "client" = "Client"
+"clients" = "All Clients"
 "export" = "Export All URLs"
 "clone" = "Clone"
 "cloneInbound" = "Clone"

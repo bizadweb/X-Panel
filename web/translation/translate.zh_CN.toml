@@ -210,6 +210,7 @@
 "privatekey" = "私钥"
 "clickOnQRcode" = "点击二维码复制"
 "client" = "客户/用户"
+"clients" = "所有客户端"
 "export" = "导出链接"
 "clone" = "克隆"
 "cloneInbound" = "克隆"
